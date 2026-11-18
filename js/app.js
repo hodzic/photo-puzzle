@@ -103,7 +103,7 @@ function move(i) {
   render();
   if (isSolved(S.board)) {
     S.playing = false; stopTimer(); tick();
-    say(`Solved in ${S.moves} moves and ${$('time').textContent}.`, true);
+    say(`Solved in ${S.moves} ${S.moves === 1 ? 'move' : 'moves'} and ${$('time').textContent}.`, true);
   }
 }
 
@@ -307,6 +307,7 @@ async function openShared(code) {
   let d;
   try { d = decodeShare(code); } catch (e) { say(e.message + ' Here is a new puzzle instead.'); return false; }
   S.cols = d.cols; S.rows = d.rows; S.numbers = d.numbers;
+  saveSettings(); // the next new puzzle keeps this size, not the size the viewer last chose
   clearPhoto();
   say('');
   if (d.imageUrl) {
@@ -327,7 +328,7 @@ async function openPhotoLink(p) {
   say('Opening the photo…');
   if (!await setPhoto(p.url, true)) return false;
   say('');
-  if (p.cols) { S.cols = p.cols; S.rows = p.rows; }
+  if (p.cols) { S.cols = p.cols; S.rows = p.rows; saveSettings(); }
   syncControls();
   newGame();
   return true;
