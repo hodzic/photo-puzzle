@@ -46,3 +46,22 @@ test('swapping two tiles makes a board unsolvable', () => {
   }
   assert.equal(isSolvable([1, 2, 3, 3], 2, 2), false);
 });
+
+import { tileBackground } from '../js/puzzle.js';
+const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
+
+test('tile backgrounds: photo already the board shape', () => {
+  const t = tileBackground(400, 500, 4, 5, 1, 2);
+  assert.ok(near(t.size, [400, 500]));
+  assert.ok(near(t.pos, [100 / 3, 50]));
+});
+
+test('tile backgrounds: wide photo is centre-cropped', () => {
+  // 3x3 board, 900x300 photo: the crop is the middle 300x300, i.e. tiles 3..5 of 9 across
+  const t = tileBackground(900, 300, 3, 3, 0, 0);
+  assert.ok(near(t.size, [900, 300]));
+  // offset of 3 tiles over a range of 8 tiles
+  assert.ok(near(t.pos, [3 / 8 * 100, 0]));
+  const last = tileBackground(900, 300, 3, 3, 2, 2);
+  assert.ok(near(last.pos, [5 / 8 * 100, 100]));
+});

@@ -77,3 +77,20 @@ export function isSolvable(b, cols, rows) {
   const dist = (rows - 1 - Math.floor(g / cols)) + (cols - 1 - (g % cols));
   return swaps % 2 === dist % 2;
 }
+
+// CSS background for a tile showing its part of a photo that is centre-cropped to the board's shape, so the photo needs no
+// canvas (photos from other sites can't be drawn to one). sw, sh: the photo's size; hc, hr: the tile's home column and row.
+// Returns background-size and background-position, each as [x, y] percentages.
+export function tileBackground(sw, sh, cols, rows, hc, hr) {
+  const ar = cols / rows;
+  let cw = sw, ch = sw / ar;
+  if (ch > sh) { ch = sh; cw = sh * ar; }
+  const sx = (sw - cw) / 2, sy = (sh - ch) / 2;
+  const axis = (s, c, off, n, h) => {
+    const size = (s / c) * n;              // photo width in tiles
+    const denom = size - 1;                // percent positions are relative to (photo - tile)
+    return [size * 100, denom > 1e-9 ? ((off / c) * n + h) / denom * 100 : 0];
+  };
+  const [xs, xp] = axis(sw, cw, sx, cols, hc), [ys, yp] = axis(sh, ch, sy, rows, hr);
+  return { size: [xs, ys], pos: [xp, yp] };
+}

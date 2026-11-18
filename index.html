@@ -6,11 +6,14 @@
 <title>Photo Puzzle</title>
 <meta name="description" content="A sliding-tile puzzle in any size from 2×2 to 8×8, with numbers or your own photo. Share a scrambled photo as a link.">
 <meta name="theme-color" content="#23272e">
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="/photo-puzzle/manifest.webmanifest">
+<link rel="icon" href="/photo-puzzle/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/photo-puzzle/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="/photo-puzzle/css/app.css">
 </head>
 <body>
 <main>
@@ -30,17 +33,33 @@
     <label class="field">Rows
       <select id="rows"></select>
     </label>
-    <label class="btn ghost" id="photoLabel" tabindex="0">
-      <span id="photoText">Use a photo</span>
-      <input type="file" id="photo" accept="image/*" hidden>
-    </label>
-    <button class="btn ghost" id="clearPhoto" hidden>Remove photo</button>
-    <label class="check" id="numbersWrap" hidden><input type="checkbox" id="numbers"> Show numbers</label>
+    <div class="photo-btns">
+      <label class="btn ghost" id="photoLabel" tabindex="0">
+        <span id="photoText">Your photo</span>
+        <input type="file" id="photo" accept="image/*" hidden>
+      </label>
+      <button class="btn ghost" id="urlBtn" aria-expanded="false" aria-controls="urlForm">Photo link</button>
+    </div>
+  </div>
+
+  <form class="urlform" id="urlForm" hidden>
+    <label for="url">Web address of a picture</label>
+    <div class="row">
+      <input type="url" id="url" placeholder="https://…/photo.jpg" autocomplete="off" required>
+      <button class="btn" type="submit">Open</button>
+    </div>
+    <p class="note">Use the address of the picture itself. In Google Photos, open the photo, then right-click it (or long-press on a phone)
+      and choose <i>Copy image address</i>. A shared album's link (photos.app.goo.gl) is a page, not a picture, so it won't work here.</p>
+  </form>
+
+  <div class="photo-opts" id="photoOpts" hidden>
+    <label class="check"><input type="checkbox" id="numbers"> Show numbers</label>
+    <button class="linkbtn" id="clearPhoto">Back to numbers</button>
   </div>
 
   <div class="frame" id="frame">
     <div class="board" id="board" role="grid" aria-label="Puzzle board">
-      <img class="peek" id="peek" alt="" hidden>
+      <img class="peek" id="peek" alt="" referrerpolicy="no-referrer" hidden>
     </div>
   </div>
 
@@ -58,8 +77,15 @@
   </div>
 
   <p class="hint">Tap a tile in the gap's row or column to slide it, along with any tiles between. Arrow keys work too.
-    A shared puzzle travels inside the link itself, photo included, so nothing is uploaded anywhere.</p>
+    A shared puzzle travels inside the link itself, so your photos aren't uploaded anywhere.</p>
+
+  <footer>
+    <span>Version <span id="version"></span></span>
+    <button class="linkbtn" id="checkUpdate">Check for updates</button>
+    <a href="https://hodzic.github.io/">More apps</a>
+  </footer>
 </main>
-<script type="module" src="js/app.js"></script>
+<div class="toast" id="toast" role="status" hidden></div>
+<script type="module" src="/photo-puzzle/js/app.js"></script>
 </body>
 </html>

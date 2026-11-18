@@ -2,13 +2,13 @@
 //   byte 0  format version (1)
 //   byte 1  columns, byte 2 rows
 //   byte 3  flags: bit 0 show numbers on photo tiles
-//   byte 4  image type: 0 none (numbers only), 1 WebP, 2 JPEG
-//   then cols*rows bytes of the scrambled board, then the image file's bytes.
+//   byte 4  image type: 0 none (numbers only), 1 WebP, 2 JPEG, 3 web address of the photo
+//   then cols*rows bytes of the scrambled board, then the image file's bytes (or the address, UTF-8).
 
 import { isSolvable, MIN, MAX } from './puzzle.js';
 
 const VERSION = 1;
-export const IMAGE_TYPES = ['', 'image/webp', 'image/jpeg'];
+export const IMAGE_TYPES = ['', 'image/webp', 'image/jpeg', 'url'];
 export const HASH_KEY = 'p=';
 
 export function toBase64Url(bytes) {
@@ -24,7 +24,11 @@ export function fromBase64Url(str) {
   return out;
 }
 
-export function encodeShare({ cols, rows, board, numbers = false, image = null, imageType = '' }) {
+export const isWebUrl = s => { try { return /^https?:$/.test(new URL(s).protocol); } catch { return false; } };
+
+// image: the photo's bytes with imageType 'image/webp' or 'image/jpeg', or imageUrl: its web address.
+export function encodeShare({ cols, rows, board, numbers = false, image = null, imageType = '', imageUrl = '' }) {
+  if (imageUrl) { image = new TextEncoder().encode(imageUrl); imageType = 'url'; }
   const t = image ? IMAGE_TYPES.indexOf(imageType) : 0;
   if (t < 0) throw new Error('Unsupported image type ' + imageType);
   const n = cols * rows, img = image || new Uint8Array(0);
@@ -47,10 +51,28 @@ export function decodeShare(code) {
   if (bytes.length < 5 + n) throw new Error('The link is incomplete.');
   const board = Array.from(bytes.subarray(5, 5 + n));
   if (!isSolvable(board, cols, rows)) throw new Error('The link is damaged.');
-  const image = t ? bytes.slice(5 + n) : null;
+  let image = t ? bytes.slice(5 + n) : null, imageUrl = '';
   if (t && !image.length) throw new Error('The link is incomplete: the photo is missing.');
-  return { cols, rows, board, numbers: !!(flags & 1), image, imageType: IMAGE_TYPES[t] };
+  if (IMAGE_TYPES[t] === 'url') {
+    imageUrl = new TextDecoder().decode(image);
+    if (!isWebUrl(imageUrl)) throw new Error('The link is damaged.');
+    image = null;
+  }
+  return { cols, rows, board, numbers: !!(flags & 1), image, imageType: image ? IMAGE_TYPES[t] : '', imageUrl };
 }
 
 // Reads a share code from a location hash ("#p=..."), or null.
 export const codeFromHash = hash => (hash.startsWith('#' + HASH_KEY) ? hash.slice(1 + HASH_KEY.length) : null);
+
+// A link that opens a new puzzle from a web photo: #photo=<address>[&size=4x5]. Returns { url, cols, rows } or null.
+export function photoFromHash(hash) {
+  if (!hash.startsWith('#photo=')) return null;
+  const q = new URLSearchParams(hash.slice(1));
+  const url = q.get('photo'), m = /^(\d)x(\d)$/.exec(q.get('size') || '');
+  if (!isWebUrl(url)) return null;
+  const ok = v => v >= MIN && v <= MAX;
+  return m && ok(+m[1]) && ok(+m[2]) ? { url, cols: +m[1], rows: +m[2] } : { url, cols: 0, rows: 0 };
+}
+
+// Google Photos share and album pages are web pages, not pictures, and can't be read from another site.
+export const isPhotosPage = url => /^https:\/\/(photos\.app\.goo\.gl|photos\.google\.com|goo\.gl\/photos)\b/.test(url);
