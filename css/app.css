@@ -101,6 +101,18 @@ h1 { font: 400 1.55rem var(--font-display); letter-spacing: .02em; margin: 0; }
 .photo.won .tile { padding: 0; }
 .photo.won .tile .face { border-radius: 0; box-shadow: none; }
 .photo.won .tile .face span { display: none; }
+/* Solved with numbers: the last tile drops in, then a diagonal wave of pops turns the tiles green and the frame glows. */
+.board.won:not(.photo) .tile.last { opacity: 1; transition: opacity .3s; }
+.board.won:not(.photo) .tile .face { animation: win-pop .55s ease-out calc(var(--wave) * 70ms + .25s) both; }
+@keyframes win-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.14); filter: brightness(1.15); }
+  100% { transform: scale(1); color: var(--good); }
+}
+.frame:has(.board.won:not(.photo)) { animation: win-glow 1.6s ease-out .4s; }
+@keyframes win-glow {
+  30% { box-shadow: 0 0 0 4px var(--good), 0 0 36px var(--good), 0 14px 30px rgba(0,0,0,.28); }
+}
 .peek { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 6px; z-index: 5; }
 /* Solved: show the photo as one picture; tiles at fractional pixel positions leave hairline seams. */
 .photo.won .peek[hidden] { display: block !important; animation: fadein .5s; }
@@ -121,7 +133,7 @@ h1 { font: 400 1.55rem var(--font-display); letter-spacing: .02em; margin: 0; }
 .linkbox input { width: 100%; font: .8rem ui-monospace, monospace; padding: 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .hint { font-size: .8rem; color: var(--muted); text-align: center; max-width: 52ch; margin: 0; }
 
-@media (prefers-reduced-motion: reduce) { .tile, .tile.last { transition: none; } .peek { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .tile, .tile.last { transition: none; } .peek, .board.won .tile .face, .frame { animation: none !important; } .board.won:not(.photo) .tile .face { color: var(--good); } }
 @media (max-width: 460px) { .photo-btns { margin-left: 0; } }
 footer { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: .8rem; color: var(--muted); }
 footer a, footer .linkbtn { color: var(--muted); font-weight: 400; }

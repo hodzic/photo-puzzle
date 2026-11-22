@@ -52,6 +52,7 @@ function buildTiles() {
     const t = document.createElement('button');
     t.className = 'tile' + (v % 2 ? ' odd' : '') + (v === n ? ' last' : '');
     t.innerHTML = `<span class="face"><span>${v}</span></span>`;
+    t.style.setProperty('--wave', (v - 1) % S.cols + Math.floor((v - 1) / S.cols)); // diagonal step for the win wave
     if (p) {
       const bg = tileBackground(p.w, p.h, S.cols, S.rows, (v - 1) % S.cols, Math.floor((v - 1) / S.cols));
       t.firstChild.style.backgroundSize = `${bg.size[0]}% ${bg.size[1]}%`;
