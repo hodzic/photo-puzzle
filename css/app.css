@@ -103,13 +103,13 @@ h1 { font: 400 1.55rem var(--font-display); letter-spacing: .02em; margin: 0; }
 .photo.won .tile .face span { display: none; }
 /* Solved with numbers: the last tile drops in, then a diagonal wave of pops turns the tiles green and the frame glows. */
 .board.won:not(.photo) .tile.last { opacity: 1; transition: opacity .3s; }
-.board.won:not(.photo) .tile .face { animation: win-pop .55s ease-out calc(var(--wave) * 70ms + .25s) both; }
+.board.won:not(.photo) .tile .face { animation: win-pop .9s ease-out calc(var(--wave) * 110ms + .3s) both; }
 @keyframes win-pop {
   0% { transform: scale(1); }
   40% { transform: scale(1.14); filter: brightness(1.15); }
   100% { transform: scale(1); color: var(--good); }
 }
-.frame:has(.board.won:not(.photo)) { animation: win-glow 1.6s ease-out .4s; }
+.frame:has(.board.won:not(.photo)) { animation: win-glow 1.4s ease-in-out .4s 2; }
 @keyframes win-glow {
   30% { box-shadow: 0 0 0 4px var(--good), 0 0 36px var(--good), 0 14px 30px rgba(0,0,0,.28); }
 }
