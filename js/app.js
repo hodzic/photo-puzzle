@@ -8,14 +8,12 @@ import { registerUpdates, checkForUpdate, applyUpdate } from './updates.js';
 const $ = id => document.getElementById(id);
 const frame = $('frame'), board = $('board'), peek = $('peek');
 
-const SHARE_LIMIT = 24000;  // bytes of photo in a share link; about 32 KB of link text
 
 const S = {
   cols: 4, rows: 4,
   board: [], startBoard: [],
   moves: 0, start: 0, timer: 0, playing: false,
   photo: null,       // { url, img, w, h, web } web: the photo is on another site (url is its address), else url is a blob: URL
-  shareCache: null,  // { key: '4x4', bytes, type } compressed photo for links
   numbers: false,
   tiles: [],
 };
@@ -154,7 +152,6 @@ async function setPhoto(src, web) {
     const img = await loadImg(src);
     if (S.photo && !S.photo.web) URL.revokeObjectURL(S.photo.url);
     S.photo = { url: src, img, w: img.naturalWidth, h: img.naturalHeight, web };
-    S.shareCache = null;
     return true;
   } catch {
     if (!web) URL.revokeObjectURL(src);
@@ -167,40 +164,7 @@ async function setPhoto(src, web) {
 
 function clearPhoto() {
   if (S.photo && !S.photo.web) URL.revokeObjectURL(S.photo.url);
-  S.photo = null; S.shareCache = null;
-}
-
-const toBlob = (canvas, type, q) => new Promise(res => canvas.toBlob(res, type, q));
-
-// Centre-crops the photo to the board's shape, longest side at most maxSide.
-function crop(img, cols, rows, maxSide) {
-  const sw = img.naturalWidth, sh = img.naturalHeight, ar = cols / rows;
-  let cw = sw, ch = sw / ar;
-  if (ch > sh) { ch = sh; cw = sh * ar; }
-  const scale = Math.min(1, maxSide / Math.max(cw, ch));
-  const c = document.createElement('canvas');
-  c.width = Math.max(1, Math.round(cw * scale));
-  c.height = Math.max(1, Math.round(ch * scale));
-  c.getContext('2d').drawImage(img, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
-  return c;
-}
-
-// A photo from this device, small enough for a link: WebP where the browser can make it, else JPEG.
-async function sharePhoto() {
-  const key = `${S.cols}x${S.rows}`;
-  if (S.shareCache?.key === key) return S.shareCache;
-  let best = null;
-  outer: for (const side of [560, 460, 380, 300, 240]) {
-    const c = crop(S.photo.img, S.cols, S.rows, side);
-    for (const q of [0.7, 0.55, 0.42]) {
-      let blob = await toBlob(c, 'image/webp', q);
-      if (!blob || blob.type !== 'image/webp') blob = await toBlob(c, 'image/jpeg', q);
-      best = blob;
-      if (blob.size <= SHARE_LIMIT) break outer;
-    }
-  }
-  S.shareCache = { key, bytes: new Uint8Array(await best.arrayBuffer()), type: best.type };
-  return S.shareCache;
+  S.photo = null;
 }
 
 $('photo').addEventListener('change', async e => {
@@ -267,12 +231,11 @@ $('share').addEventListener('click', async () => {
   $('linkbox').hidden = true;
   try {
     const opts = { cols: S.cols, rows: S.rows, board: S.startBoard, numbers: S.numbers };
-    if (S.photo?.web) opts.imageUrl = S.photo.url;
-    else if (S.photo) {
-      say('Preparing the photo…');
-      const { bytes, type } = await sharePhoto();
-      opts.image = bytes; opts.imageType = type;
+    if (S.photo && !S.photo.web) {
+      say('A photo from this device can\'t be shared. To share a photo puzzle, open the photo with Photo link.');
+      return;
     }
+    if (S.photo) opts.imageUrl = S.photo.url;
     const url = location.origin + location.pathname + '#' + HASH_KEY + encodeShare(opts);
     if (navigator.share) {
       try {
@@ -293,7 +256,7 @@ $('share').addEventListener('click', async () => {
       $('link').focus(); $('link').select();
     }
   } catch {
-    say('The link could not be made. Try again, or try a different photo.');
+    say('The link could not be made. Try again.');
   } finally {
     btn.disabled = false;
   }
@@ -313,9 +276,8 @@ async function openShared(code) {
   if (d.imageUrl) {
     if (!await setPhoto(d.imageUrl, true)) say('The photo in this link is no longer available, so the puzzle uses numbers.');
   } else if (d.image) {
-    if (await setPhoto(URL.createObjectURL(new Blob([d.image], { type: d.imageType })), false))
-      S.shareCache = { key: `${d.cols}x${d.rows}`, bytes: d.image, type: d.imageType };
-    else say('The photo in this link could not be opened, so the puzzle uses numbers.');
+    // links made before sharing needed a web photo carry the photo itself
+    if (!await setPhoto(URL.createObjectURL(new Blob([d.image], { type: d.imageType })), false)) say('The photo in this link could not be opened, so the puzzle uses numbers.');
   }
   syncControls();
   newGame(d.board);

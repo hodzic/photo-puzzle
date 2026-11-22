@@ -1,7 +1,7 @@
 # Photo Puzzle
 
 A sliding-tile puzzle (the classic "15 puzzle") in any size from 2×2 to 8×8, with numbered tiles or your own photo.
-Share a puzzle as a link: whoever opens it gets the same scrambled board, photo included.
+Share a puzzle as a link: whoever opens it gets the same scrambled board, photo included when it came from a web address.
 Plain HTML/JS with ES modules, no build step, served from GitHub Pages at https://hodzic.github.io/photo-puzzle/.
 Installs to a phone's home screen, works offline and updates itself.
 
@@ -38,11 +38,10 @@ pages that other sites can't read, so the app explains this instead. A link can 
 
 ## Share links
 
-The puzzle travels in the link's `#p=` fragment, which browsers never send to a server, so photos are not uploaded anywhere.
+The puzzle travels in the link's `#p=` fragment, which browsers never send to a server.
 The fragment is base64url of: format version, columns, rows, flags (show numbers), image type, the scrambled board
-(one byte per cell), then the photo: its web address when it came from one (a short link, full quality, but it breaks
-if the photo is taken down), else its bytes. A photo from the device is centre-cropped to the board's shape and compressed to WebP
-(JPEG where the browser can't make WebP) at 24 KB or less, so a link is at most about 32 KB long. Browsers and most
-messaging apps handle that; SMS and some chat apps may cut long links short.
+(one byte per cell), then the photo's web address. Only puzzles with numbers or a web photo can be shared, which keeps
+links short; a photo from the device stays on it. Older links that carry a compressed photo (image type WebP or JPEG)
+still open.
 
 Shuffles are random walks of legal moves, so every puzzle can be solved; a received board is checked for solvability.
