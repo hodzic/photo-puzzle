@@ -110,6 +110,24 @@ h1 { font: 400 1.55rem var(--font-display); letter-spacing: .02em; margin: 0; }
   100% { transform: scale(1); color: var(--good); }
 }
 .frame:has(.board.won:not(.photo)) { animation: win-glow 1.4s ease-in-out .4s 2; }
+/* Solved with a photo: a sparkling comet runs twice around the picture's edge, then the frame glows. */
+@property --spark { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.board.photo.won::after {
+  content: ""; position: absolute; inset: -7px; z-index: 6; pointer-events: none; border-radius: 10px; padding: 5px;
+  background: conic-gradient(from var(--spark), transparent 0 58%, rgba(255,200,90,.25) 70%, #ffc95a 84%, #fff 89%,
+    transparent 90% 91.5%, #fff 92.5%, transparent 93.5% 95%, #ffe9b0 96%, transparent 97%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 4px #ffd27a) drop-shadow(0 0 10px rgba(255,210,122,.7));
+  animation: spark-run 3.2s cubic-bezier(.45,.05,.4,1) .5s both;
+}
+@keyframes spark-run {
+  0% { --spark: 0deg; opacity: 0; }
+  8% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { --spark: 720deg; opacity: 0; }
+}
+.frame:has(.board.photo.won) { animation: win-glow 1.4s ease-in-out 2.6s 2; }
 @keyframes win-glow {
   30% { box-shadow: 0 0 0 4px var(--good), 0 0 36px var(--good), 0 14px 30px rgba(0,0,0,.28); }
 }
@@ -133,7 +151,7 @@ h1 { font: 400 1.55rem var(--font-display); letter-spacing: .02em; margin: 0; }
 .linkbox input { width: 100%; font: .8rem ui-monospace, monospace; padding: 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .hint { font-size: .8rem; color: var(--muted); text-align: center; max-width: 52ch; margin: 0; }
 
-@media (prefers-reduced-motion: reduce) { .tile, .tile.last { transition: none; } .peek, .board.won .tile .face, .frame { animation: none !important; } .board.won:not(.photo) .tile .face { color: var(--good); } }
+@media (prefers-reduced-motion: reduce) { .tile, .tile.last { transition: none; } .peek, .board.won .tile .face, .frame, .board.photo.won::after { animation: none !important; } .board.photo.won::after { display: none; } .board.won:not(.photo) .tile .face { color: var(--good); } }
 @media (max-width: 460px) { .photo-btns { margin-left: 0; } }
 footer { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: .8rem; color: var(--muted); }
 footer a, footer .linkbtn { color: var(--muted); font-weight: 400; }
